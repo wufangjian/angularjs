@@ -1,0 +1,137 @@
+
+学习Angular时,最令人迷惑的变化是要学习如何考虑应用的架构。尽管我们不能强制规定 代码结构,因为那是开发人员的权利,但我们可以把我们的经验分享出来。
+【1 目录结构】
+AngularJS充满了各种可选项,Web应用的规模随着时间的推移而增长,所以很难决定如何组织代码。控制器放在哪里最合适?我们是应该把服务逻辑放在一个文件里,还是把它们拆散?
+
+无论要构建什么规模的Angular应用,对结构方面的选择最好都要考虑一下:将要使用什么工具来构造这个应用,以及应用的大小。做的时候要带着这样的预期:项目是会增长的。
+
+[为了生产环境的需要,我们也建议使用一种像Grunt这样的工具把我们的文件合并成一个]
+
+每个Angular对象都应当有自己的文件,根据其功能来命名。比如,MainController对象合理的位置应该在scripts/controllers/main.js里,myFilter对象在scripts/filter/myFilter.js里。
+采用这种结构是有好处的,因为每个文件都很小,根据功能区分,它能让多个开发人员有效 地协同开发一个应用。
+此外,我们建议为应用编写单元测试时,在根目录的test/下创建跟script目录同样的结构
+
+创建单模块应用时,我们建议用这样的结构。当创建多模块复合应用时,可以用一个有相似结构的module/目录作为顶层结构。
+
+
+
+【2 模块】
+模块是Angular应用的核心功能。模块包含我们为特定应用编写的所有代码,因而可能会快 速膨胀。尽管这趋势也不算坏(模块是一种减少全局作用域干扰的好办法),我们还可以再细分模块。
+关于何时创建模块,何时在全局模块中嵌套功能,有几种不同意见。下面两种方式都是把功能模块化的合理方式。
+
+1. 函数模块化
+最推荐的方法(我们以及Google团队)是根据功能将应用程序分解为模块。当根据功能分解应用程序时,我们打算聚焦于模块函数而不是包含的函数类型
+
+例如,当编写一个包含[主页路由]和[登录路由]的简单应用时,你可以构建两个模块来交付完全
+分离的功能。这个主应用看起来可能如下所示:
+	angular.module('app', [
+		'app.home',
+		'app.login'
+	]);
+这个完整的应用程序被分解为两个分离的模块并且包含有限的功能,重点是粘合应用程序的不同部分。在这个案例中,我们有包含大多数逻辑的“home”界面和“login”界面。
+
+以这种方式编写应用程序的好处是:
+	1)我们可以在逻辑中分解函数的类型。你可以集中于为应用程序的每个组成部分提供一个个功能。还可以为我们编写的部分编写测试,从而分解测试。此外,还可以延迟加载应用程序的不同部分,因此可以为屏幕中最常见的界面提供最快的应用程序体验。
+	2)此外,这样做还有一个好处:一次编写模块就可跨应用程序共享它们。就是说,如果你的应用程序背后使用类似的登录系统,你也可以将这个应用程序的登录部分以及相关测试简单地复 制、粘贴到另一个应用程序中。
+	[在我们的产品应用程序中,我们使用这个方法编写模块化代码并且强烈推荐它]
+
+2. 功能的模块化
+要将我们的应用模块化,最显而易见的方式是按照模块功能划分
+我们需要把这些模块注入为主应用的依赖项,这样一来,为每个模块类型建立测试都非常容易,并且隔离和细分了功能,我们需要在编写细则时对这些功能作出解释
+
+比如,我们可以为每种Angular对象类型创建一个模块:
+	angular.module('myApp.directives', []);
+	angular.module('myApp.services', []);
+	angular.module('myApp.filters', []);
+	// 我们经常在控制器中使用服务,
+	// 所以,我们会把它们
+	// 注入到'myApp.controllers'模块中
+	angular.module('myApp.controllers', [
+          'myApp.services'
+    ]);
+
+    angular.module('myApp', [
+    	'myApp.directives',
+        'myApp.controllers',
+        'myApp.filters',
+        'myApp.services'
+	]);
+	使用这种方法的一个问题是,它有时会给我们留下一堆小模块。这一结果不会影响性能,但会让开发变得繁琐
+
+
+
+
+【3 控制器】
+当命名控制器时,惯例是使用控制器的名称,用大写字母开始,再加Controller。例如:
+angular.module('myApp', [])
+	.controller('someController', function($scope) {// 一般不这么写 })
+	.controller('SomeController', function($scope) { // 这是控制器通常的写法})
+
+1）作用域的蔓延是Angular框架最令人困惑的一个方面,我们在控制器的$scope中定义了很多功能。编写Web应用时,有时会发现控制器的大小逐渐严重失控。
+2）可以移出处理DOM的方法,以减少控制器的大小。把功能移动到自定义指令中,大幅降低了为判断是否公开特定视图或者格式化一个值的需要。
+3）因为我们在视图里绑定了$scope 上的值,控制器没有必要负责持有DOM对象所需的状态值。比如,我们可以删除控制器中处理显示值的方法。
+4）假设我们有一个登录页面,根据用户的选择的状态显示登录表单或者注册表单,把这个页面 命名为showLoginForm:
+	angular.module('myApp', [])
+		.controller('LoginController', function($scope) {
+			// 如果为true,显示为登录表单
+			// 如果为false,显示为注册表单
+			$scope.showLoginForm = true;
+			$scope.sendLogin = function() {}
+			$scope.sendRegister = function() {}
+		});
+
+	在我们的HTML里面,可能以如下方式设置LoginController的功能:
+	<div ng-show="showLoginForm">
+	    <form ng-submit="runLogin()"></form>
+	</div>
+	<div ng-show="!showLoginForm">
+	    <form ng-submit="runRegister()"></form>
+	</div>
+5）尽管这个例子很普通(在我们的$scope里只有一个多余的变量),当我们的视图变得越来越复杂时,这种变量的数量会按指数级增长。
+	使用指令,我们可以把这个值去掉。例如:
+	angular.module('myApp', [])
+	.directive('loginForm', function() {
+		return {
+			scope: {
+				onLogin: '&',
+				onRegister: '&'
+			},
+        	templateUrl: '/templates/loginRegForms.html',
+         	link: function(scope, ele, attrs) {
+					scope.showLoginForm = true;
+				scope.submitLogin = function() {scope.onLogin({user: scope.loginUser});}
+				scope.submitRegister = function() {}
+				scope.onRegister({user: scope.newUser});
+			}
+		}
+	});
+
+	angular.module('myApp', []).controller('LoginController', function($scope) {
+		$scope.sendLogin = function() {}
+		$scope.sendRegister = function() {}
+	});
+
+	我们可以在视图里调用这个指令,就像调用其他指令那样:
+	<div login-form
+		on-login="sendLogin(user)"
+        on-register="sendRegister(user)">
+    </div>
+   	我们的视图变量安全地藏到指令里去了,不再需要在控制器里持有视图条件了。让控制器精简是最佳实践,使用指令能让我们有效地做到这一点。
+   	此外,像上面那样把登录的路由隔离到指令中,也使得测试它们的功能更容易。
+
+在控制器之间共享数据
+1)在Angular里,我们可以通过几种不同的方式在控制器之间传递数据。我们可以把控制器嵌套在同一个父控制器中,允许每个控制器独立修改父控制器$scope上的属性值,或者可以在服务中共享数据。
+2)尽量把数据存在服务内部,但是更好的方式要视情况而定。比如说,在一个对话框里,把正 在显示的数据放在父控制器里更有道理。
+
+
+
+【4 指令】
+1)知道什么时候写指令跟知道什么时候不写同样重要。更多的情况下,写指令是个好主意。
+2)就像在上面看到的那样,它们减少了控制器之中的混乱。
+3)测试指令也比测试控制器容易得多。
+4)指令并不一定要有视图模板。通常情况下,它们可以只作为视图之下处理数据的垫片。ngModelController控制器就是这种功能派上用场的一个例子。
+
+
+【5 测试】
+我们总是鼓励测试我们的程序。我们不断为各种复杂度的功能编写单元测试。这些测试让我们对代码有信心,不管这信心有多小。专注于测试也让我们的时间更有效,并且更关注于功能。
+只要确信已经对Angular应用API作过单元测试了,就可以编写端到端测试。端到端测试可以是脆弱的,依赖于视图,所以我们把它们留到开发过程的最后阶段。不仅如此,端到端测试一般比单元测试慢得多,所以,在开发过程中,先写单元测试能让我们更专注于功能的实现。
