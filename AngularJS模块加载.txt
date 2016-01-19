@@ -1,6 +1,6 @@
 Angularjs模块在被加载和执行前，可以对其自身进行配置。我们可以在应用的加载阶段应用不同的逻辑组。
 
-1.配置
+#1.配置
 在模块的加载阶段，Angularjs会在提供者注册和配置的过程中对模块进行配置。在整个流程中，该阶段是唯一能够在应用启动前进行修改的部分.
 
 angular.module('myApp', []).config(function($provide) {
@@ -18,4 +18,67 @@ angular.module('myApp', [])
     }
 })
 
+
+Angularjs会在编译的时候执行这些辅助函数，他们在功能上等同于下面的语法。
+angular.module('myApp', []).config(function($provide ,$compileProvider) {
+    $provide.factory('myFactory', function() {
+        var service = {};
+        return service;
+    });
+    $compileProvider.directive('myDirective', function() {
+        return {
+            template: '<button>Click me</button>'
+        };
+    });
+});
+特别需要注意的是Angularjs会以这些函数的书写和注册顺序来执行它们，因此我们不能注入一个尚未注册的提供者。
+  唯一例外的是constant()方法，这个方法总会在所有配置块之前被执行
+
+当对模块进行配置的时候，需要特别注意的是：只有少数集中对象能注入到config()函数中【提供者和常量】。如果我们将一个服务注入进去，会在真正对其初始化之前就实例化该服务。
+
+这种对配置服务有着严格限制的一个副作用就是：我们只能注入用provider()语法构建的服务。其它的则不行。
+*关于provider()
+
+这些config()代码块可以对我们的服务进行自定义配置。例如：自定义url、api密钥。
+也可以定义多个配置模块，这样就可以把不同阶段的应用配置代码，集中到不同的代码块。
+
+angular.module('myApp', ['ngRoute'])
+    .config(function($routeProvider) {
+        $routeProvider.when('/', {
+            controller: 'WelcomeController',
+            template: 'views/welcome.html'
+        });
+    })
+    .config(function(ConnectionProvider) {
+        ConnectionProvider.setApiKey('SOME_API_KEY');
+    });
+
+config()函数接受一个参数
+configFunction函数，angularjs在模块加载时执行这个函数。
+
+*在1.3+ 版本中，所有的 .config 都是在 .provider运行之后运行。这意味着不能使用. config 配置下游的 provider
+
+
+
+#运行块
+和配置块不同，运行块在注入器创建之后被执行。它是所有angularjs应用中第一个被执行的函数。
+运行块通常用来注册全局监听事件。例如，我们会在.run()块中设置【路由】事件的监听器以及【过滤】未经授权的请求。
+
+假设我们需要在路由改变时验证用户的合法性。 .run()方法是唯一合理的放置代码块的地方。
+angular.module('myApp', ['ngRoute'])
+    .run(function($rootScope, AuthService) {
+        $rootScope.$on('$routeChangeStart', function(evt, next, current) {
+            // 如果用户未登录
+            if (!AuthService.userLoggedIn()) {
+                if (next.templateUrl === "login.html") {
+                    // 已经转向登录路由因此无需重定向
+                } else {
+                    $location.path('/login');
+                }
+            }
+        });
+    });
+    
+.run()方法接受一个参数
+    runFunction函数 angularjs会在注入器创建后执行。
 
