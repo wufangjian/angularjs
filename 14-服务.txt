@@ -172,77 +172,80 @@ angular.module('myApp', ['myApp.services'])
     【如果希望在config()函数中可以对服务进行配置,必须用provider()来定义服务】
     
     provider()方法为服务注册提供者。可以接受两个参数。
-     name(字符串)：name参数在providerCache中是注册的名字。
-    				name+Provider会成为服务的提供者。同时name也是服务实例的名字。
-	 aProvider(对象/函数/数组)：aProvider可以是多种形式。
-					1）如果aProvider是函数,那么它会通过依赖注入被调用,并且负责通过$get方法返回一个对象
-					2）如果aProvider是数组,会被当做一个带有行内依赖注入声明的函数来处理。数组的最后一个元素应该是函数								,可以返回一个带有$get方法的对象。
-					3）如果aProvider是对象,它应该带有$get方法。 provider()函数返回一个已经注册的提供者实例。
+	  name(字符串)：name参数在providerCache中是注册的名字。
+    	name+Provider会成为服务的提供者。同时name也是服务实例的名字。
+    	 aProvider(对象/函数/数组)：aProvider可以是多种形式。
+		1）如果aProvider是函数,那么它会通过依赖注入被调用,并且负责通过$get方法返回一个对象
+		2）如果aProvider是数组,会被当做一个带有行内依赖注入声明的函数来处理。数组的最后一个元素应该是函数,可以返回一个带有$get方法的对象。
+		3）如果aProvider是对象,它应该带有$get方法。 provider()函数返回一个已经注册的提供者实例。
 					
 	直接使用provider() API是最原始的创建服务的方法:
-		// 在模块对象上直接创建provider的例子
-		angular.module('myApp', []) .provider('UserService', {
-			favoriteColor: null,
-			setFavoriteColor: function(newColor) {
-				this.favoriteColor = newColor;
-			},
-			// $get函数可以接受 injectables
-			$get: function($http) {
-				return {
-					'name': 'Ari',
-					getFavoriteColor: function() {
-						return this.favoriteColor || 'unknown';
-					}
-				};
-			}
-		})
-		用这个方法创建服务,必须返回一个定义有 $get() 函数的对象,否则会导致错误。
+	// 在模块对象上直接创建provider的例子
+	angular.module('myApp', []) .provider('UserService', {
+		favoriteColor: null,
+		setFavoriteColor: function(newColor) {
+			this.favoriteColor = newColor;
+		},
+		// $get函数可以接受 injectables
+		$get: function($http) {
+			return {
+				'name': 'Ari',
+				getFavoriteColor: function() {
+					return this.favoriteColor || 'unknown';
+				}
+			};
+		}
+	})
+	用这个方法创建服务,必须返回一个定义有 $get() 函数的对象,否则会导致错误。
+	
+	
+	可以通过注入器来实例化服务(由于AngularJS会处理服务的实例化,我们不需要自己动手, 更多信息请查看第24章):
+	// Get the injector
+	var injector = angular.injector(['myApp']);
+	// Invoke our service 
+	injector.invoke(
+  	['UserService', function(UserService) {
+    	// UserService returns
+     	// {
+     	// 'name': 'Ari',
+     	//  getFavoriteColor: function() {}
+     	// }
+    }]);
+	.provider()是非常强大的,可以让我们在不同的应用中共享服务
+	了解constant()和value()方法对于创建服务也是非常重要的
 		
 		
-		可以通过注入器来实例化服务(由于AngularJS会处理服务的实例化,我们不需要自己动手, 更多信息请查看第24章):
-		// Get the injector
-		var injector = angular.injector(['myApp']);
-		// Invoke our service 
-		injector.invoke(
-          	['UserService', function(UserService) {
-            	// UserService returns
-             	// {
-             	// 'name': 'Ari',
-             	//  getFavoriteColor: function() {}
-             	// }
-            }]);
-		.provider()是非常强大的,可以让我们在不同的应用中共享服务
-		了解constant()和value()方法对于创建服务也是非常重要的
+	//4. constant()==================================================
+	可以将一个已经存在的变量值注册为服务,并将其注入到应用的其他部分当中。
+	例如,假设我们需要给后端服务一个apiKey,可以用constant()将其当作常量保存下来。
+	
+	constant()函数可以接受两个参数
+	 name(字符串): 需要注册的常量的名字
+	 value(常量): 需要注册的常量的值(值或者对象)
+	
+	constant()方法返回一个注册后的服务实例
+		angular.module('myApp').constant('apiKey','123123123')
+		
+	这个常量服务可以像其他服务一样被注入到配置函数中:
+		angular.module('myApp')
+			.controller('MyController', function($scope, apiKey) {
+				// 可以像上面一样用apiKey作为常量
+				// 用123123123作为字符串的值
+				$scope.apiKey = apiKey;
+			});
+	【这个常量不能被装饰器拦截】
 		
 		
-		//4. constant()==================================================
-		可以将一个已经存在的变量值注册为服务,并将其注入到应用的其他部分当中。
-		例如,假设我们需要给后端服务一个apiKey,可以用constant()将其当作常量保存下来。
-		
-		constant()函数可以接受两个参数
-		 name(字符串): 需要注册的常量的名字
-		 value(常量): 需要注册的常量的值(值或者对象)
-		
-		constant()方法返回一个注册后的服务实例
-			angular.module('myApp').constant('apiKey','123123123')
-			
-		这个常量服务可以像其他服务一样被注入到配置函数中:
-			angular.module('myApp')
-				.controller('MyController', function($scope, apiKey) {
-					// 可以像上面一样用apiKey作为常量
-					// 用123123123作为字符串的值
-					$scope.apiKey = apiKey;
-				});
-		【这个常量不能被装饰器拦截】
-		
-		
-		//5. value()==================================================
-		如果服务的$get方法返回的是一个常量,那就没要必要定义一个包含复杂功能的完整服务,可以通过value()函数方便地注册服务
-		value()方法可以接受两个参数。
-		 name(字符串): 同样是需要注册的服务名。
-		 value(值): 将这个值将作为可以注入的实例返回。
-		value()方法返回以name参数的值为名称的注册后的服务实例。
-		angular.module('myApp').value('apiKey','123123123');
+	//5. value()==================================================
+	如果服务的$get方法返回的是一个常量,那就没要必要定义一个包含复杂功能的完整服务,可以通过value()函数方便地注册服务
+	
+	value()方法可以接受两个参数。
+	 name(字符串): 同样是需要注册的服务名。
+	 value(值): 将这个值将作为可以注入的实例返回。
+	
+	value()方法返回以name参数的值为名称的注册后的服务实例。
+	
+	angular.module('myApp').value('apiKey','123123123');
 	
 		
 
