@@ -1,0 +1,41 @@
+
+【关于-服务】
+我们目前只关注了视图如何同$scope绑定在一起，以及控制器是如何管理数据的。处于内存占用和性能的考虑，控制器只有在需要时才会被实例化，不再需要时就会被销毁。也就是说每次【切换路由】或者【重新加载视图】的时候，当前控制器会被angularjs清除掉。
+
+#服务 => 提供了一种能在应用的整个生命周期内保持数据的方法,它能够在控制器之间进行通信,并且能保证数据的一致性。
+
+服务在每个应用中只能被实例化(被$injector实例化)一次，并且是延迟加载的(需要时才会被创建)。服务提供了把与特定功能相关联的方法集中在一起的接口。
+
+以AngularJS的$http服务为例,它提供了对浏览器的XMLHttpRequest对象的底层访问功能, 我们可以通过$http的API同XMLHttpRequest进行交互,而不需要因为调用这些底层代码而污染 应用。
+
+
+// 示例服务,在应用的整个生命周期内保存 current_user 
+angular.module('myApp', []) .factory('UserService', function($http) {
+    var current_user;
+    return {
+        getCurrentUser: function() {
+            return current_user;
+        },
+        setCurrentUser: function(user) {
+            current_user = user;
+        }
+    };
+});
+
+AngularJS提供了一些内置服务,在任何地方使用它们的方式都是统一的。同时,为复杂应用创建我们自己的服务也是非常有用的。
+
+在AngularJS中创建自己的服务是非常容易的:只需要注册这个服务即可。服务被注册后, AngularJS编译器就可以引用它,并且在运行时把它当作依赖加载进来。服务名称的注册表使得在测试中伪造和剔除相互隔离的应用依赖变得非常容易。
+
+
+【1.注册一个服务】
+
+
+
+
+
+
+
+
+
+
+
