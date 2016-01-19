@@ -261,3 +261,34 @@ angular.module('myApp', [])
 	// 因为在config函数内部无法访问这个值
 });
 
+
+//7. decorator()==================================================
+1)$provide服务提供了在【服务实例创建时】对其进行拦截的功能,可以对服务进行扩展,或者用另外的内容完全代替它
+2)装饰器是非常强大的,它不仅可以应用在我们自己的服务上,也可以对AngularJS的核心服务进行拦截、中断甚至替换功能的操作。事实上AngularJS中很多功能的测试就是借助 $provider.decorator()建立的
+3)对服务进行装饰的场景有很多,比如对服务进行扩展,将外部数据缓存进localStorage的功能, 或者对服务进行封装以便在开发中进行调试和跟踪等
+4)例如,我们想给之前定义的githubService服务加入日志功能,可以借助decorator()函数 方便地实现这个功能,而不需要对原始的服务进行修改
+5)decorator()函数可以接受两个参数。
+     name(字符串):将要拦截的服务名称
+     decoratorFn(函数): 在服务实例化时调用该函数,这个函数由injector.invoke调用,可以将服务注入这个函 17 数中
+6)$delegate 是可以进行装饰的最原始的服务,为了装饰其他服务,需要将其注入进装饰器。
+
+var githubDecorator = function($delegate,$log) {
+    var events = function(path) {
+        var startedAt = new Date();
+        var events = $delegate.events(path);
+        // 事件是一个promise 
+        events.finally(function() {
+            $log.info("Fetching events" + " took " + (new Date() - startedAt) + "ms");});
+            return events;
+        };
+        return {
+            events: events
+        };
+    };
+    
+angular.module('myApp')
+    .config(function($provider) {
+        $provider.decorator('githubService',githubDecorator);
+    });
+
+
