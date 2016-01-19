@@ -79,179 +79,184 @@ angular.module('myApp', ['myApp.services'])
      value()
      provider()
     
-    //1.factory() ==================================================
-    如前所见,factory()方法是创建和配置服务的最快捷方式。factory()函数可以接受两个参数。
-     name(字符串) 需要注册的服务名。
-     getFn(函数) 这个函数会在AngularJS创建服务实例时被调用。
-        angular.module('myApp')
-            .factory('myService', function() {
-                return { 5 'username': 'auser'}
-            });
-            
-    因为[服务是单例对象],getFn在应用的生命周期内只会被调用一次。同其他AngularJS的服务一样,在定义服务时,getFn可以接受一个包含     可被注入对象的数组或函数。getFn函数可以返回简单类型、函数乃至对象等任意类型的数据(同value()函数类似)。
+//1.factory() ==================================================
+如前所见,factory()方法是创建和配置服务的最快捷方式。factory()函数可以接受两个参数。
+ name(字符串) 需要注册的服务名。
+ getFn(函数) 这个函数会在AngularJS创建服务实例时被调用。
+angular.module('myApp')
+    .factory('myService', function() {
+        return { 5 'username': 'auser'}
+    });
+    
+因为[服务是单例对象],getFn在应用的生命周期内只会被调用一次。同其他AngularJS的服务一样,在定义服务时,getFn可以接受一个包含     可被注入对象的数组或函数。getFn函数可以返回简单类型、函数乃至对象等任意类型的数据(同value()函数类似)。
 
+angular.module('myApp')
+.factory('githubService', ['$http', function($http) {
+    return {
+        getUserEvents: function(username) {}
+    };
+}]);
+
+//2. service()==================================================
+使用service()可以注册一个支持构造函数的服务,它允许我们为服务对象注册一个构造函数。
+service()方法接受两个参数
+ name(字符串): 要注册的服务名称
+ constructor(函数): 构造函数,我们调用它来实例化服务对象
+
+service()函数会在创建实例时通过new关键字来实例化服务对象。
+var Person = function($http) {
+    this.getName = function() {
+        return $http({ method: 'GET', url: '/api/user'});
+    };
+};
+angular.service('personService', Person);
+
+//3. provider()==================================================
+所有服务工厂都是由$provider服务创建的,$provider服务负责在运行时初始化这些提供者
+提供者是一个具有$get()方法的对象,$injector通过调用$get方法创建服务实例
+$provider提供了数个不同的API用户创建服务,每个方法都有特殊用途
+所有创建服务的方法都构建在provider方法之上,provider()方法负责在$providerCache中注册服务
+从技术上说，当我们假定传入的函数就是$get()时，factory()函数就是用provider()方法注册服务的简略形式
+下面两种方法的作用完全一样,并且会创建同一个服务:
     angular.module('myApp')
-        .factory('githubService', ['$http', function($http) {
+        .factory('myService', function() {
             return {
-                getUserEvents: function(username) {}
-            };
-        }]);
+                'username': 'auser'
+            }; 
+        })
         
-    //2. service()==================================================
-    使用service()可以注册一个支持构造函数的服务,它允许我们为服务对象注册一个构造函数。
-    service()方法接受两个参数
-         name(字符串): 要注册的服务名称
-         constructor(函数): 构造函数,我们调用它来实例化服务对象
-    
-    service()函数会在创建实例时通过new关键字来实例化服务对象。
-        var Person = function($http) {
-            this.getName = function() {
-                return $http({ method: 'GET', url: '/api/user'});
-            };
-        };
-        angular.service('personService', Person);
-    
-    //3. provider()==================================================
-    所有服务工厂都是由$provider服务创建的,$provider服务负责在运行时初始化这些提供者
-    提供者是一个具有$get()方法的对象,$injector通过调用$get方法创建服务实例
-    $provider提供了数个不同的API用户创建服务,每个方法都有特殊用途
-    所有创建服务的方法都构建在provider方法之上,provider()方法负责在$providerCache中注册服务
-    从技术上说，当我们假定传入的函数就是$get()时，factory()函数就是用provider()方法注册服务的简略形式
-        下面两种方法的作用完全一样,并且会创建同一个服务:
-            angular.module('myApp')
-                .factory('myService', function() {
-                    return {
-                        'username': 'auser'
-                    }; 
-                })
-                
-                // 这与上面工厂的用法等价
-                .provider('myService', {
-                    $get: function() {
-                        return {
-                            'username': 'auser'
-                        };
-                    }
-                });
-                
-                
-    是否可以一直使用.factory()方法来代替.provider()呢?
-    答案取决于是否需要用AngularJS的.config()函数来对.provider()方法返回的服务进行额外的扩展配置。同其他创建服务的方法不同		,config()方法可以被注入特殊的参数。
-    
-    比如我们希望在应用启动前配置githubService的URL:
-    	// 使用.provider注册该服务
-    	angular.module('myApp', []).provider('githubService', function($http) {
-    		// 默认的,私有状态
-    		var githubUrl = 'https://github.com';
-			setGithubUrl: function(url) {
-				// 通过.config改变默认属性
-				if (url) {
-					githubUrl = url;
-				}
-			},
-			method: JSONP, // 如果需要,可以重写
-			$get: function($http) {
-				self = this;
-		    	return $http({ 
-		      		method: self.method, 
-		       		url: githubUrl + '/events'
-		       	});
+        // 这与上面工厂的用法等价
+        .provider('myService', {
+            $get: function() {
+                return {
+                    'username': 'auser'
+                };
+            }
+        });
+是否可以一直使用.factory()方法来代替.provider()呢?
+答案取决于是否需要用AngularJS的.config()函数来对.provider()方法返回的服务进行额外的扩展配置。同其他创建服务的方法不同		,config()方法可以被注入特殊的参数。
+
+比如我们希望在应用启动前配置githubService的URL:
+    // 使用.provider注册该服务
+    angular.module('myApp', []).provider('githubService', function($http) {
+    	// 默认的,私有状态
+    	var githubUrl = 'https://github.com';
+		setGithubUrl: function(url) {
+			// 通过.config改变默认属性
+			if (url) {
+				githubUrl = url;
 			}
-		});
-	通过使用.provider()方法,可以在多个应用使用同一个服务时获得更强的扩展性,特别是在不同应用或开源社区之间共享服务时。
-	
-	
-	在上面的例子中,provider()方法在文本githubService后添加Provider生成了一个新的提
-	供者,githubServiceProvider可以被注入到config()函数中。
-    
-    angular.module('myApp', [])
-    	.config(function(githubServiceProvider) {
-    		 githubServiceProvider.setGithubUrl("git@github.com");
-    	});
-    	
-    【如果希望在config()函数中可以对服务进行配置,必须用provider()来定义服务】
-    
-    provider()方法为服务注册提供者。可以接受两个参数。
-	  name(字符串)：name参数在providerCache中是注册的名字。
-    	name+Provider会成为服务的提供者。同时name也是服务实例的名字。
-    	 aProvider(对象/函数/数组)：aProvider可以是多种形式。
-		1）如果aProvider是函数,那么它会通过依赖注入被调用,并且负责通过$get方法返回一个对象
-		2）如果aProvider是数组,会被当做一个带有行内依赖注入声明的函数来处理。数组的最后一个元素应该是函数,可以返回一个带有$get方法的对象。
-		3）如果aProvider是对象,它应该带有$get方法。 provider()函数返回一个已经注册的提供者实例。
-					
-	直接使用provider() API是最原始的创建服务的方法:
-	// 在模块对象上直接创建provider的例子
-	angular.module('myApp', []) .provider('UserService', {
-		favoriteColor: null,
-		setFavoriteColor: function(newColor) {
-			this.favoriteColor = newColor;
 		},
-		// $get函数可以接受 injectables
+		method: JSONP, // 如果需要,可以重写
 		$get: function($http) {
-			return {
-				'name': 'Ari',
-				getFavoriteColor: function() {
-					return this.favoriteColor || 'unknown';
-				}
-			};
+			self = this;
+	    	return $http({ 
+	      		method: self.method, 
+	       		url: githubUrl + '/events'
+	       	});
 		}
-	})
-	用这个方法创建服务,必须返回一个定义有 $get() 函数的对象,否则会导致错误。
-	
-	
-	可以通过注入器来实例化服务(由于AngularJS会处理服务的实例化,我们不需要自己动手, 更多信息请查看第24章):
-	// Get the injector
-	var injector = angular.injector(['myApp']);
-	// Invoke our service 
-	injector.invoke(
-  	['UserService', function(UserService) {
-    	// UserService returns
-     	// {
-     	// 'name': 'Ari',
-     	//  getFavoriteColor: function() {}
-     	// }
-    }]);
-	.provider()是非常强大的,可以让我们在不同的应用中共享服务
-	了解constant()和value()方法对于创建服务也是非常重要的
-		
-		
-	//4. constant()==================================================
-	可以将一个已经存在的变量值注册为服务,并将其注入到应用的其他部分当中。
-	例如,假设我们需要给后端服务一个apiKey,可以用constant()将其当作常量保存下来。
-	
-	constant()函数可以接受两个参数
-	 name(字符串): 需要注册的常量的名字
-	 value(常量): 需要注册的常量的值(值或者对象)
-	
-	constant()方法返回一个注册后的服务实例
-		angular.module('myApp').constant('apiKey','123123123')
-		
-	这个常量服务可以像其他服务一样被注入到配置函数中:
-		angular.module('myApp')
-			.controller('MyController', function($scope, apiKey) {
-				// 可以像上面一样用apiKey作为常量
-				// 用123123123作为字符串的值
-				$scope.apiKey = apiKey;
-			});
-	【这个常量不能被装饰器拦截】
-		
-		
-	//5. value()==================================================
-	如果服务的$get方法返回的是一个常量,那就没要必要定义一个包含复杂功能的完整服务,可以通过value()函数方便地注册服务
-	
-	value()方法可以接受两个参数。
-	 name(字符串): 同样是需要注册的服务名。
-	 value(值): 将这个值将作为可以注入的实例返回。
-	
-	value()方法返回以name参数的值为名称的注册后的服务实例。
-	
-	angular.module('myApp').value('apiKey','123123123');
-	
-		
+	});
+通过使用.provider()方法,可以在多个应用使用同一个服务时获得更强的扩展性,特别是在不同应用或开源社区之间共享服务时。
 
+
+在上面的例子中,provider()方法在文本githubService后添加Provider生成了一个新的提
+供者,githubServiceProvider可以被注入到config()函数中。
+
+angular.module('myApp', [])
+    .config(function(githubServiceProvider) {
+    	 githubServiceProvider.setGithubUrl("git@github.com");
+    });
     
+【如果希望在config()函数中可以对服务进行配置,必须用provider()来定义服务】
+
+provider()方法为服务注册提供者。可以接受两个参数。
+  name(字符串)：name参数在providerCache中是注册的名字。
+    name+Provider会成为服务的提供者。同时name也是服务实例的名字。
+     aProvider(对象/函数/数组)：aProvider可以是多种形式。
+	1）如果aProvider是函数,那么它会通过依赖注入被调用,并且负责通过$get方法返回一个对象
+	2）如果aProvider是数组,会被当做一个带有行内依赖注入声明的函数来处理。数组的最后一个元素应该是函数,可以返回一个带有$get方法的对象。
+	3）如果aProvider是对象,它应该带有$get方法。 provider()函数返回一个已经注册的提供者实例。
+				
+直接使用provider() API是最原始的创建服务的方法:
+// 在模块对象上直接创建provider的例子
+angular.module('myApp', []) .provider('UserService', {
+	favoriteColor: null,
+	setFavoriteColor: function(newColor) {
+		this.favoriteColor = newColor;
+	},
+	// $get函数可以接受 injectables
+	$get: function($http) {
+		return {
+			'name': 'Ari',
+			getFavoriteColor: function() {
+				return this.favoriteColor || 'unknown';
+			}
+		};
+	}
+})
+用这个方法创建服务,必须返回一个定义有 $get() 函数的对象,否则会导致错误。
 
 
+可以通过注入器来实例化服务(由于AngularJS会处理服务的实例化,我们不需要自己动手, 更多信息请查看第24章):
+// Get the injector
+var injector = angular.injector(['myApp']);
+// Invoke our service 
+injector.invoke(
+  ['UserService', function(UserService) {
+    // UserService returns
+     // {
+     // 'name': 'Ari',
+     //  getFavoriteColor: function() {}
+     // }
+}]);
+.provider()是非常强大的,可以让我们在不同的应用中共享服务
+了解constant()和value()方法对于创建服务也是非常重要的
+	
+	
+//4. constant()==================================================
+可以将一个已经存在的变量值注册为服务,并将其注入到应用的其他部分当中。
+例如,假设我们需要给后端服务一个apiKey,可以用constant()将其当作常量保存下来。
+
+constant()函数可以接受两个参数
+ name(字符串): 需要注册的常量的名字
+ value(常量): 需要注册的常量的值(值或者对象)
+
+constant()方法返回一个注册后的服务实例
+	angular.module('myApp').constant('apiKey','123123123')
+	
+这个常量服务可以像其他服务一样被注入到配置函数中:
+	angular.module('myApp')
+		.controller('MyController', function($scope, apiKey) {
+			// 可以像上面一样用apiKey作为常量
+			// 用123123123作为字符串的值
+			$scope.apiKey = apiKey;
+		});
+【这个常量不能被装饰器拦截】
+		
+		
+//5. value()==================================================
+如果服务的$get方法返回的是一个常量,那就没要必要定义一个包含复杂功能的完整服务,可以通过value()函数方便地注册服务
+
+value()方法可以接受两个参数。
+ name(字符串): 同样是需要注册的服务名。
+ value(值): 将这个值将作为可以注入的实例返回。
+
+value()方法返回以name参数的值为名称的注册后的服务实例。
+angular.module('myApp').value('apiKey','123123123');
 
 
+//6 何时使用value()和constant()
+value()方法和constant()方法之间最主要的区别是：【常量可以注入到配置函数中,而值不行】
+通常情况下,可以通过value()来注册服务对象或函数,用constant()来配置数据
 
+angular.module('myApp', [])
+.constant('apiKey', '123123123')
+.config(function(apiKey) {
+     // 在这里apiKey将被赋值为123123123
+     // 就像上面设置的那样
+})
+.value('FBid','231231231')
+.config(function(FBid) {
+	// 这将抛出一个错误,未知的provider: FBid
+	// 因为在config函数内部无法访问这个值
+});
