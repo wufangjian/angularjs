@@ -1,0 +1,21 @@
+Angularjs模块在被加载和执行前，可以对其自身进行配置。我们可以在应用的加载阶段应用不同的逻辑组。
+
+1.配置
+在模块的加载阶段，Angularjs会在提供者注册和配置的过程中对模块进行配置。在整个流程中，该阶段是唯一能够在应用启动前进行修改的部分.
+
+angular.module('myApp', []).config(function($provide) {
+
+});
+
+大部门时候我们都在使用config()函数，并在配置阶段执行。例如：我们在某个模块配置一个服务或者一个指令
+angular.module('myApp', [])
+  .factory('myFactory', function(){
+    var service = {};
+    return service;
+  }).directive('myDirective', function(){
+    return {
+      template: '<button>Click me</button>'
+    }
+})
+
+
