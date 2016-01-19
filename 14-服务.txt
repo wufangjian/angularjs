@@ -260,3 +260,4 @@ angular.module('myApp', [])
 	// 这将抛出一个错误,未知的provider: FBid
 	// 因为在config函数内部无法访问这个值
 });
+
