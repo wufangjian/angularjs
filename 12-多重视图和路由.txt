@@ -1,0 +1,166 @@
+
+【前言】
+能够从一个视图跳转到另外一个视图对单页面应用来说，至关重要。当应用变得越来越复杂的时候，我们需要用一种合理的方式来管理用户在使用过程中看到的界面
+
+也许我们已经通过在HTML中添加行内的模板代码，实现了视图的管理，但这些代码会随着视图的增多越来越复杂和难以管理，同事当多人协作开发的时候，变得很复杂。
+
+除了用 ng-include 指令在视图中引用多个模板外，更好的做法是将视图分解为布局和模板视图，并根据用户的访问URL来展示相应的视图。
+
+我们会将这些模板分解到视图中，并在布局模板内进行组装。angularjs允许我们在$route服务的提供者$routeProvider中通过声明路由来实现这个功能。
+
+通过$routeProvider可以发挥出浏览器历史导航的优势，并让用户能够基于当前URL创建书签和分享。
+
+
+
+【12.1 安装】
+从1.2开始，angularjs将ngRoutes从核心代码中剥离出来成为独立的模块。我们需要安装并引用它，才能在angularjs中正常的使用路由功能。
+
+可以 code.angularjs.org，也可以使用bower来安装，这样会将它存放在bower的目录中。
+<script src="js/vendor/angular.js"></script>
+<script src="js/vendor/angular-route.js"></script>
+
+要在ngRoute模块在我们的应用中当做依赖加载进来
+angular.module('myApp', ['ngRoute']);
+
+
+
+【12.2 布局模块】
+要创建一个布局模块，需要修改HTML以告诉Angularjs把模板渲染到何处。通过将ng-view指令和路由组合到一起，我们可以精确地指定当前路由所对应的模板渲染到何处。
+
+
+####################################################
+#布局模板
+<header>
+	<h1>Header</h1>
+</header>
+<div class="content">
+	<div ng-view></div>
+</div>
+<footer>
+	<h5>Footer</h5>
+</footer>
+####################################################
+
+我们将所有需要渲染的内容都放到了<div class="content">中，而header 和 footer中的内容在路由改变的时候不会发生任何改变。
+
+ng-view 是由ngRoute模块提供的一个特殊指令，它的作用是在HTML中给$route对应的视图内容占位。它会创建自己的作用域并将模板嵌套在内部。
+
+ngView视图遵循以下规则。
+ 1)每次触发$routeChangeSuccess事件，视图都会更新。
+ 2)如果某个模板同当前的路由相关联
+ 	a.创建一个新的作用域
+ 	b.移除上一个视图，同时上一个作用域也会被消除
+ 	c.将[新的作用域]同[当前模板]关联在一起
+ 	d.如果路由中有相关的定义，那么就把对应的[控制器]同[当前作用域]关联起来
+ 	e.触发$viewContentLoaded事件
+ 	f.如果提供了onload属性，调用该属性指定的函数
+
+
+
+【12.3 路由】
+
+我们可以使用angularjs提供的 when 和 otherwise 两个方法来定义应用的路由。
+
+用config函数在特定的模块或应用中定义路由:
+angular.module('myApp', [])
+.config(['$routeProvider',function($routeProvider) {
+	
+}]);
+(这里我们应用了数组这种特殊的依赖注入语法)
+
+现在我们可以用when 方法创建一个独立的路由:
+angular.module('myApp', [])
+	.config(['$routeProvider', function($routeProvider) {
+		$routeProvider.when('/',
+			{
+				templateUrl: 'views/home.html',
+                controller: 'HomeController'
+            });
+    }]);
+
+when(path,route)
+1)第一个参数是路径会与$location.path匹配，$location.path也就是当前的路径,如果path路径中有其它内容也可以正常匹配。我们也可以在path路径中存储参数，参数需要以冒号开头。(例如：name)。后面会讨论如何用$routeParams读取这些参数
+2)第二个参数是配置对象，决定 当路由匹配成功后具体做什么。配置对象所包含的属性[controller、template、templateURL、resolve、redirectTo和 reloadOnSearch]
+一个复杂的路由方案会包含多个路由，以及可以将一切意外路由重定向的捕获器
+例如：
+####################################################
+angular.module('myApp', [])
+.config(['$routeProvider', function($routeProvider) {
+ 	$routeProvider.when('/', {}]);
+    templateUrl: 'views/home.html',
+    controller: 'HomeController'
+})
+.when('/login', {
+    templateUrl: 'views/login.html',
+    controller: 'LoginController'
+})
+.when('/dashboard', {
+    templateUrl: 'views/dashboard.html',
+    controller: 'DashboardController',
+    resolve: {
+        user: function(SessionService) {
+            return SessionService.getCurrentUser();
+        }
+    }
+})
+.otherwise({
+    redirectTo: '/'
+});
+####################################################
+
+1. controller
+2. template
+3. templateUrl
+4. resolve [如果设置了resolve属性，angularjs会把该列表中的所有属性注入到，控制器中，如果这些依赖是promise对象，它们在控制器加载以及$routeChangeSuccess被触发钱，会被resolve设置成一个值]
+	列表对象可以是:
+		键，键值是会被注入到控制器中的依赖的名字
+		工厂,即可以是一个服务的名字，也可以是一个返回值，它是会被注入到控制器中的函数或者是被resolve的promise对象
+	在上面的例子中，resolve会发送一个$http请求，将返回的值付给data，然后注入到控制其中，就可以在控制器中使用data
+####################################################
+resolve: {
+    'data': ['$http', function($http) {
+        return $http.get('/api').then(
+            function success(resp) { return response.data; },
+            function error(reason) { return false; }
+		);
+	}];
+}
+####################################################
+5. redirectTo
+	redirectTo: '/home'
+	//或者
+	redirectTo: function(route,path,search)
+1）如果redirectTo属性值是一个字符串，那么路径会被替换成这个值
+2）如果是一个函数那么会被替换成函数的返回值
+ 如果redirectTo的属性值是一个函数，angularjs在调用它时会传入3个参数
+ 	a.从当前路径中提出的路由参数
+ 	b.当前路径
+ 	c.当前URL中的查询串
+
+6.reloadOnSearch
+  如果被设置为true，当$location.serach()发生变化时，会重新加载路由,
+
+  angular.module('MyApp', []).config(['$routeProvider', function($routeProvider) {
+  	$routeProvider
+  		.when('/', {
+                    controller: 'HomeController',
+                     templateUrl: 'views/home.html'
+                 })
+                 .when('/inbox/:name', {
+                     controller: 'InboxController',
+                     templateUrl: 'views/inbox.html'
+})
+                 .otherwise({redirectTo: '/'});
+           }]);
+
+
+
+
+
+
+
+
+
+
+
+
