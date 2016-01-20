@@ -138,20 +138,50 @@ resolve: {
  	c.当前URL中的查询串
 
 6.reloadOnSearch
-  如果被设置为true，当$location.serach()发生变化时，会重新加载路由,
+  1)如果被设置为true，当$location.serach()发生变化时，会重新加载路由
+  2)如果被设置为false,当url[查询串部分]发生变化时就不会重新加载路由。
+  	这个小窍门对[路由嵌套][原地分页]等需求非常有用
 
-  angular.module('MyApp', []).config(['$routeProvider', function($routeProvider) {
-  	$routeProvider
-  		.when('/', {
-                    controller: 'HomeController',
-                     templateUrl: 'views/home.html'
-                 })
-                 .when('/inbox/:name', {
-                     controller: 'InboxController',
-                     templateUrl: 'views/inbox.html'
-})
-                 .otherwise({redirectTo: '/'});
-           }]);
+现在介绍用when函数来设置路由[1.首页路由 2.收件箱路由 3.默认路由]
+####################################################
+angular.module('MyApp', []).config(['$routeProvider', function($routeProvider) {
+	$routeProvider
+		.when('/', {
+    	controller: 'HomeController',
+        templateUrl: 'views/home.html'
+     })
+ 	.when('/inbox/:name', {
+    	controller: 'InboxController',
+    	templateUrl: 'views/inbox.html'
+    })
+    .otherwise({redirectTo: '/'});
+}]);
+####################################################
+
+$routeParams
+前面提到如果我们在路由参数前面加上:,angularjs就会把它解析出来并传递给$routeParams
+例如：
+	$routeProvider.when('index/:name', {
+		controller: 'IndexController',
+		templateUrl: 'views/index.html'
+	})
+
+angularjs会在 $routeParams 中添加一个名为 name 的键，它的值会被设置为加载进来的url中的值
+app.controller('InboxController', function($scope, $routeParams) { 
+    //在这里访问$routeParams
+});
+
+
+
+
+【12.4 $location】
+angularjs 提供了一个服务用以解析地址栏中的URL,并让你可以访问应用当前所对应的路由。它提供了修改路径和处理各种形式导航的能力。
+($location 对 window.loaction 进行了封装并且和 angularjs 集成在一起)
+
+当应用需要在内部进行跳转时是使用$location服务的最佳场景
+
+
+
 
 
 
