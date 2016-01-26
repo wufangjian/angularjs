@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<title></title>
+	<script src="http://cdn.bootcss.com/angular.js/1.4.9/angular.js"></script>
+</head>
+
+<body ng-app="myApp">
+	<my-directive></my-directive>
+	<div ng-controller="MyController">
+		<div my-attribute my-url="{{myUrl}}" my-link-text="{{myLinkText}}" my-gurl="{{myGurl}}" my-glink-text="{{myGlinkText}}"></div>
+	</div>
+</body>
+
+
+<script>
+angular.module('myApp', [])
+.controller('MyController', function($scope){
+	$scope.myUrl = 'http://www.baidu.com';
+	$scope.myLinkText = '百度';
+	$scope.myGurl = 'http://www.google.com';
+	$scope.myGlinkText = 'Google';
+})
+
+.directive('myDirective', function(){
+	return {
+		restrict: 'E',
+		replace: true,
+		template: '<a href="http://www.baidu.com">click me go to baidu</a>',
+	}
+})
+
+.directive('myAttribute', function(){
+	return {
+		restrict: 'EAC',
+		replace: true,
+		scope: {
+			myUrl: '@myGurl', // 绑定策略
+			myLinkText: '@myGlinkText' // 绑定策略
+		},
+		template: '<a href="{{myUrl}}">{{myLinkText}}</a>'
+	}
+});
+</script>
+</html>
