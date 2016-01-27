@@ -1,6 +1,6 @@
 
 【关于-服务】
-我们目前只关注了视图如何同$scope绑定在一起，以及控制器是如何管理数据的。处于内存占用和性能的考虑，控制器只有在需要时才会被实例化，不再需要时就会被销毁。也就是说每次【切换路由】或者【重新加载视图】的时候，当前控制器会被angularjs清除掉。
+我们目前只关注了视图如何同$scope绑定在一起，以及控制器是如何管理数据的。处于内存占用和性能的考虑，控制器只有在需要时才会被实例化，不再需要时就会被销毁。也就是说每次【切换路由】或者【重新加载视图】的时候，当前控制器会被 angularjs 清除掉。
 
 #服务 => 提供了一种能在应用的整个生命周期内保持数据的方法,它能够在控制器之间进行通信,并且能保证数据的一致性。
 
@@ -10,7 +10,7 @@
 
 
 // 示例服务,在应用的整个生命周期内保存 current_user 
-angular.module('myApp', []) .factory('UserService', function($http) {
+angular.module('myApp', []).factory('UserService', function($http) {
     var current_user;
     return {
         getCurrentUser: function() {
@@ -24,7 +24,7 @@ angular.module('myApp', []) .factory('UserService', function($http) {
 
 AngularJS提供了一些内置服务,在任何地方使用它们的方式都是统一的。同时,为复杂应用创建我们自己的服务也是非常有用的。
 
-在AngularJS中创建自己的服务是非常容易的:只需要注册这个服务即可。服务被注册后, AngularJS编译器就可以引用它,并且在运行时把它当作依赖加载进来。服务名称的注册表使得在测试中伪造和剔除相互隔离的应用依赖变得非常容易。
+在AngularJS中创建自己的服务是非常容易的:只需要注册这个服务即可。服务被注册后, AngularJS编译器就可以引用它,并且在运行时把它当作依赖加载进来。 服务名称的注册表使得在测试中伪造和剔除相互隔离的应用依赖变得非常容易。
 
 
 【1.注册一个服务】
@@ -88,7 +88,7 @@ angular.module('myApp')
         return { 5 'username': 'auser'}
     });
     
-因为[服务是单例对象],getFn在应用的生命周期内只会被调用一次。同其他AngularJS的服务一样,在定义服务时,getFn可以接受一个包含     可被注入对象的数组或函数。getFn函数可以返回简单类型、函数乃至对象等任意类型的数据(同value()函数类似)。
+因为[服务是单例对象],getFn在应用的生命周期内只会被调用一次。同其他AngularJS的服务一样,在定义服务时,getFn可以接受一个包含可被注入对象的数组或函数。getFn函数可以返回简单类型、函数乃至对象等任意类型的数据(同value()函数类似)。
 
 angular.module('myApp')
 .factory('githubService', ['$http', function($http) {
@@ -113,10 +113,10 @@ angular.service('personService', Person);
 
 //3. provider()==================================================
 所有服务工厂都是由$provider服务创建的,$provider服务负责在运行时初始化这些提供者
-提供者是一个具有$get()方法的对象,$injector通过调用$get方法创建服务实例
+提供者是一个具有$get()方法的对象,$injector 通过调用$get方法创建服务实例
 $provider提供了数个不同的API用户创建服务,每个方法都有特殊用途
-所有创建服务的方法都构建在provider方法之上,provider()方法负责在$providerCache中注册服务
-从技术上说，当我们假定传入的函数就是$get()时，factory()函数就是用provider()方法注册服务的简略形式
+所有创建服务的方法都构建在 provider 方法之上,provider()方法负责在$providerCache中注册服务
+从技术上说，当我们假定传入的函数就是$get()时,  factory()函数就是用provider()方法注册服务的简略形式
 下面两种方法的作用完全一样,并且会创建同一个服务:
     angular.module('myApp')
         .factory('myService', function() {
@@ -261,7 +261,6 @@ angular.module('myApp', [])
 	// 因为在config函数内部无法访问这个值
 });
 
-
 //7. decorator()==================================================
 1)$provide服务提供了在【服务实例创建时】对其进行拦截的功能,可以对服务进行扩展,或者用另外的内容完全代替它
 2)装饰器是非常强大的,它不仅可以应用在我们自己的服务上,也可以对AngularJS的核心服务进行拦截、中断甚至替换功能的操作。事实上AngularJS中很多功能的测试就是借助 $provider.decorator()建立的
@@ -276,7 +275,7 @@ var githubDecorator = function($delegate,$log) {
     var events = function(path) {
         var startedAt = new Date();
         var events = $delegate.events(path);
-        // 事件是一个promise 
+        // 事件是一个 promise 
         events.finally(function() {
             $log.info("Fetching events" + " took " + (new Date() - startedAt) + "ms");});
             return events;
