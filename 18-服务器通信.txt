@@ -1,0 +1,91 @@
+angular最强大的组建之一是与服务端通信的能力。不管用什么后端,angular都能通过api与其通信。
+本章主要关注：将要开发的自定义后端，以及将后端用作服务的无服务器后端。
+
+[18.1 自定义服务器端]
+本章重点介绍用nodejs构建一个自定义服务器端。尽管我们是用nodejs来构建这个服务端应用，也可以用其他任意支持http api的后端语言来构建。
+
+[18.2 安装nodejs]
+现在可以运行安装程序了,让它自然运行。安装完成后,就能在命令行运行两个包了:
+ node
+ npm
+node是Node的二进制文件,我们用它来运行Node应用。
+而npm是Node包管理器,我们用它来安装Node库。
+
+[18.3 安装Express]
+我们要用一种叫做expressjs的Web应用程序框架,它会给我们一些处理HTTP的语法糖。它允许我们只使用Web应用程序的功能,而不需要处理Node的HTTP服务器的细节。
+
+它的特性很多,包括提供了一个干净的路由语法、动态的中间件和大量专门为Express创建的开源包。此外,许多知名企业在生产中也使用它。
+
+为了安装Express,我们会使用npm二进制:
+	1]$ npm install -g express-generator
+
+{我们使用-g标记来将包进行全局安装。如果不想全局安装它,可以省略它,这样它会被安装在当前目录的node_modules/目录下。然而我们还是推荐对它进行全局安装。}
+
+现在,可以用Express生成器来生成Express应用:
+	2]$ express myApp
+{这行代码生成了一个很基本的Express应用,它带有一套依赖项,以及一个非强制性的目录结构}
+
+要运行我们的应用,需要用npm把基本的依赖项安装在本地。这次,我们会用它把package.json中设置的依赖项安装到本地。
+	3]$ cd myApp && npm install –d
+{-d标志告诉npm把依赖项安装在本地。这个语法十分明确:可以丢开这个-d, 因为它被设置为默认将依赖项安装到本地。}
+
+
+现在,我们来运行一下这个应用,以确认一切都能按照我们设想的那样运行。只需用node可执行文件把它运行一下就可以了
+	4]$ node app.js
+如果我们在Web浏览器中打开URL http://localhost:3000,刚生成的Express应用的默认页就会显示出来。
+
+每次我们对app.js文件作修改,都需要停止服务器并且重启。在开发过程中,这个过程太麻烦了,所以我们建议不使用node.js,而是使用nodemon服务器。
+
+要安装nodemon,需再次使用npm: 
+	5]$ npm install --save-dev nodemon
+{--save-dev标记告诉npm把这个包保存在package.json中的devDependencies段 落。我们推荐使用这种做法,因为当团队有多个开发人员时,这会有所帮助: 可以确保整个团队对代码库都有正确的依赖项。}
+
+每次对app.js文件作修改并且保存时,nodemon会自动重启Node应用。
+
+该应用在app.js中启动。在app.js文件中,有两个重要的组件值得注意:[提供静态文件的静态路径]和[执行的路由(以及如何执行的)]。
+#====================================================
+// ...
+app.use(express.methodOverride()); 16 app.use(app.router);
+// 第一行
+app.use(express.static(path.join(__dirname, 'public')));
+// ...
+app.get('/', routes.index);
+app.get('/users', user.list);
+// ...
+#====================================================
+第一行代码调用了express.static(),告诉Node到public/目录中查找任何匹配请求路由的文件。例如,如果请求的路由是/users,它就会查找一个叫“users”的文件。
+
+第二组代码(app.get())匹配在public/目录中不存在静态文件的路由。
+
+要使用Angular应用,需要在生成的app.js上作两次修改:
+首先,我们交换 express.static() 和 app.router 行,如下所示:
+#====================================================
+// ...
+app.use(express.methodOverride());
+
+// 把该行移至下一行上方 
+app.use(express.static(path.join(__dirname, 'public')));
+app.use(app.router);
+// ...
+#====================================================
+
+尽管严格来说这个交换不是很有必要,但它有助于后续对HTML5Mode的支持,并且会告诉 Express 预取我们之前应用中定义的public/目录下的文件。
+
+其次,移除指向“/”路由的一行:
+// ...
+// app.get('/', routes.index); 
+
+// 删除这一行 
+app.get('/users', users.list);
+// ...
+
+
+
+
+
+
+
+
+
+
+
